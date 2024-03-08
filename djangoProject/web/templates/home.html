@@ -1,0 +1,665 @@
+{% load static %}
+{#引入静态文件 static#}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>智慧课堂监控平台</title>
+
+    <link rel="stylesheet" href="{% static "plugins/bootstrap/css/bootstrap.min.css" %}">
+    <link rel="stylesheet" href="{% static "css/app.css" %}" />
+
+    <style>
+        .navbar{
+            border-radius: 0;
+        }
+        table{table-layout:fixed;word-break:break-all}
+        .el_height {
+            max-height: 85px;
+            overflow-y: auto;
+        }
+    </style>
+
+        <style>
+        #videoContainer {
+            position: absolute;
+            top:-23%;
+            width: 104%; /* 视频宽度 */
+        }
+        #myVideo {
+            width: 100%;
+        }
+        #progressBar {
+            width: 100%;
+        }
+        #customProgressBar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+        }
+        #controls {
+            text-align: center;
+        }
+    </style>
+
+    <script src="{% static "js/echarts.min.js"%}"></script>
+    <script src="{% static "js/d3.min.js" %}"></script>
+    <script src="{% static "js/china.js" %}"></script>
+</head>
+	<body class="bg06">
+    <!-- 导航栏beign -->
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+            <a class="navbar-brand" href="#">智慧课堂监控平台</a>
+      </div>
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+{#                      <li><a href="/depart/list/">部门管理</a></li>#}
+                      <li><a href="/user/list">用户管理</a></li>
+                      <li><a href="/movie/datas/">电影数据</a></li>
+                      <li><a href="/movie/views/">电影大屏展示</a></li>
+                      <li><a href="/movie/recommand/">电影推荐</a></li>
+                      <li><a href="/user/datas/">用户数据</a></li>
+                      <li><a href="/movie/personalrec/">个性推荐</a></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="#">登录</a></li>
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+            <ul class="dropdown-menu">
+              <li><a href="#">Action</a></li>
+              <li><a href="#">Another action</a></li>
+              <li><a href="#">Something else here</a></li>
+              <li role="separator" class="divider"></li>
+              <li><a href="#">Separated link</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!-- 导航栏 end -->
+
+		<header class="header">
+		<div id='currentTime'></div>
+			<h3>智慧课堂监控平台</h3>
+        <div id="temperature" style="line-height:60px; font-size:18px;color:red;position:absolute;top:7%;left:13%;z-index:0;">
+           数据加载中...</div>
+        <div id="showtime" style="line-height:60px; font-size:18px;color:red;position:absolute;top:7%;right:13%;z-index:0;">
+           数据加载中...</div>
+		</header>
+
+		<div class="wrapper">
+			<div class="container-fluid">
+				<div class="row fill-h">
+					<div class="col-lg-3 fill-h">
+						<div class="xpanel-wrapper xpanel-wrapper-1-1">
+							<div class="xpanel">
+								<div class="title">课堂听讲人数占比随时间变化折线图</div>
+								<div class="left_right_div" id="data_month"></div>
+							</div>
+						</div>
+						<div class="xpanel-wrapper xpanel-wrapper-2-1">
+							<div class="xpanel">
+								<div class="title"><a href="/chart/detail1/" style="color:#00C6FB">教室座位表听讲程度</a></div>
+								<div class="left_right_div" id="heat_map"></div>
+							</div>
+						</div>
+					</div>
+					<div class="col-lg-6 fill-h" >
+						<div class="xpanel-wrapper xpanel-wrapper-1-2">
+							<div class="xpanel">
+								<div class="col-lg-2 col-lg-offset-1 col-md-lg-1" style="margin-top:15px;border: 2px dashed RGB(189, 116, 16); border-radius: 10px;width:100px;color: RGB(189, 116, 16);">
+                                  <div style="display: flex; justify-content: center; align-items: center;">应到人数</div>
+                                    <div style="display: flex; justify-content: center; align-items: center;">50</div>
+                                </div>
+								<div class="col-lg-2 col-lg-offset-1 col-md-lg-1" style="margin-top:15px;border: 2px dashed RGB(83, 169, 63); border-radius: 10px;width:100px;color: RGB(83, 169, 63);">
+                                  <div style="display: flex; justify-content: center; align-items: center;">实到人数</div>
+                                    <div style="display: flex; justify-content: center; align-items: center;">50</div>
+                                </div>
+								<div class="col-lg-2 col-lg-offset-1 col-md-lg-1" style="margin-top:15px;border: 2px dashed RGB(197, 207, 78); border-radius: 10px;width:100px;color: RGB(197, 207, 78);">
+                                  <div style="display: flex; justify-content: center; align-items: center;">缺勤人数</div>
+                                    <div style="display: flex; justify-content: center; align-items: center;">0</div>
+                                </div>
+                                <div class="col-lg-2 col-lg-offset-1 col-md-lg-1" style="margin-top:15px;border: 2px dashed RGB(64, 128, 200); border-radius: 10px;width:100px;color: RGB(64, 128, 200);">
+                                  <div style="display: flex; justify-content: center; align-items: center;">全勤率</div>
+                                    <div style="display: flex; justify-content: center; align-items: center;">100%</div>
+                                </div>
+							</div>
+						</div>
+
+						<div class="xpanel-wrapper xpanel-wrapper-2-2">
+							<div class="xpanel">
+								<div class="left_right_div" id="data_month">
+                                        <div id="videoContainer">
+                                                <video id="myVideo" src="{% static "video/test.mp4" %}" ></video>
+                                                <input id="progressBar" type="range" min="0" max="100" step="0.01" value="0" onchange="seekVideo()">
+                                                <div id="controls" style="position: relative;">
+                                                    <button onclick="addsecond()" style="position: absolute; left:0px; border-radius: 10px; width:80px;">前进1秒</button>
+                                                    <button onclick="playVideo()" style="position: absolute; left:70px; border-radius: 10px; width:60px;">播放</button>
+                                                    <button onclick="pauseVideo()" style="position: absolute; left:130px; border-radius: 10px; width:60px;">暂停</button>
+                                                    <button onclick="subsecond()" style="position: absolute; right:0px; border-radius: 10px; width:80px;">后退1秒</button>
+                                                    <span id="currentTimeVideo" style="font-size:16px; color: white;  position: absolute; left:40%;">当前视频时间: 0 秒 0 分</span>
+                                                </div>
+                                            </div>
+                                            <br>
+
+                                </div>
+							</div>
+						</div>
+{#						<div class="xpanel-wrapper xpanel-wrapper-2-2">#}
+{#							<div class="xpanel">#}
+{#								<div class="title"><a href="/chart/detail1/" style="color:#00C6FB">折现</a></div>#}
+{#								<div class="left_right_div" id="time_line"></div>#}
+{#							</div>#}
+{#						</div>#}
+					</div>
+
+					<div class="col-lg-3 fill-h">
+						<div class="xpanel-wrapper xpanel-wrapper-1-3">
+							<div class="xpanel">
+								<div class="title">雷达图</div>
+								<div class="left_right_div" id="data_radar"></div>
+							</div>
+						</div>
+						<div class="xpanel-wrapper xpanel-wrapper-2-3">
+							<div class="xpanel">
+								<div class="title">条形统计图</div>
+								<div class="left_right_div" id="data_bar"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+        <script src="{% static "js/jquery-3.6.0.js"%}"></script>
+		<script src={% static "js/flexible.js" %}></script>
+
+{#        <script src={% static "charts/line_chart.js" %}></script>#}
+{#        <script src={% static "charts/heatmap_chart.js" %}></script>#}
+        <script type="text/javascript">
+            $(function (){
+                initLine();
+
+                initHeatMap();
+
+                initRadar();
+
+                initBar();
+            })
+            function initLine() {
+// videoDataVisualization.js
+
+                var myChart = echarts.init(document.getElementById('data_month'));
+
+                $.ajax({
+                    url: "/web/charts/type_line/",
+                    type: "GET",
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            var times = res.data.times.slice(0, 30);
+                            var listening_percentages = res.data.listening_percentages.slice(0, 30);
+
+                                // 更新图表配置项和数据
+                                var option = {
+                                    color:"#87CEFA",
+                                    // title: {
+                                    //     text: '课堂听讲人数占比随时间变化折线图',
+                                    //     textStyle:{
+                                    //         color:'#7edae8', //坐标的字体颜色
+                                    //     },
+                                    // },
+                                    tooltip: {
+                                        trigger: 'axis',
+                                        formatter: function (params) {
+                                            var date = new Date(params[0].value[0]);
+                                            return (
+                                                date.toLocaleString() +
+                                                ' : ' +
+                                                params[0].value[1]
+                                            );
+                                        },
+                                        axisPointer: {
+                                            animation: false
+                                        }
+                                    },
+                                    xAxis: {
+                                        axisLabel: {
+                                            textStyle:{
+                                                color:'#7edae8', //坐标的字体颜色
+                                            },
+                                        },
+                                        axisLine:{
+                                            lineStyle:{
+                                            color:'#00eeff', //坐标轴的颜色
+                                            },
+                                        },
+                                        type: 'time',
+                                        splitLine: {
+                                            show: false
+                                        }
+                                    },
+                                    yAxis: {
+                                        axisLabel: {
+                                            textStyle:{
+                                                color:'#7edae8', //坐标的字体颜色
+                                            },
+                                        },
+                                        axisLine:{
+                                            lineStyle:{
+                                            color:'#00eeff', //坐标轴的颜色
+                                            },
+                                        },
+                                        type: 'value',
+                                        boundaryGap: [0, '100%'],
+                                        splitLine: {
+                                            show: false
+                                        }
+                                    },
+                                //    legend:{
+                                //        图例
+                                //        color:"#ffffff",
+                                 //   },
+                                    series: [
+                                        {
+
+                                            name: '听讲人数占比',
+                                            type: 'line',
+                                            showSymbol: false,
+                                            data: times.map((time, index) => [time, listening_percentages[index]])
+                                        }
+                                    ]
+                                };
+
+                                // 使用刚指定的配置项和数据显示图表。
+                            myChart.setOption(option);
+
+                            var currentIndex = 30; // 初始化为前30个数据点的索引
+                            var left = 0;
+                            var intervalId = setInterval(function () {
+                                // 更新折线图的显示
+                                myChart.setOption({
+                                    series: [
+                                        {
+                                            data: times.map((time, index) => [time, index <= currentIndex ? listening_percentages[index] : null])
+                                        }
+                                    ]
+                                });
+
+                                // 如果当前索引小于总数据点数，则逐渐增加索引
+                                if (currentIndex < res.data.times.length - 1) {
+                                    currentIndex++;
+                                    // 更新x轴时间点，每次添加一个时间点
+                                    times.push(res.data.times[currentIndex]);
+                                    listening_percentages.push(res.data.listening_percentages[currentIndex]);
+                                    myChart.setOption({
+                                        xAxis: {
+                                            data: times.slice(left)
+                                        }
+                                    });
+                                    left++;
+                                } else {
+                                    // 当达到总数据点数时，清除定时器
+                                    clearInterval(intervalId);
+                                }
+                            }, 1000);
+                        } else {
+                            console.error("数据加载失败：" + res.error);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("请求失败：" + error);
+                    }
+                });
+
+            }
+
+            function initHeatMap() {
+                // videoDataVisualization.js
+
+var myChart = echarts.init(document.getElementById('heat_map'));
+
+$.ajax({
+    url: "/web/charts/type_heatmap/",
+    type: "GET",
+    dataType: "JSON",
+    success: function (res) {
+        if (res.status) {
+            const rows = res.data_heatmap.rows;
+            const columns = res.data_heatmap.columns;
+            const data = res.data_heatmap.data.map(function (item) {
+                return [item[1], item[0], item[2] || '-'];
+            });
+
+            option = {
+                tooltip: {
+                    position: 'top'
+                },
+                grid: {
+                    height: '50%',
+                    top: '10%'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: rows,
+                    splitArea: {
+                        show: true
+                    }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: columns,
+                    splitArea: {
+                        show: true
+                    }
+                },
+                visualMap: {
+                    min: 0,
+                    max: 10,
+                    calculable: true,
+                    orient: 'horizontal',
+                    left: 'center',
+                    bottom: '15%'
+                },
+                series: [
+                    {
+                        name: 'Punch Card',
+                        type: 'heatmap',
+                        data: data,
+                        label: {
+                            show: true
+                        },
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }
+                ]
+            }
+            myChart.setOption(option);
+        }
+    },
+    error: function (xhr, status, error) {
+        console.error("请求失败：" + error);
+    }
+});
+            }
+
+            function initRadar() {
+                // videoDataVisualization.js
+
+                var myChart = echarts.init(document.getElementById('data_radar'));
+                var video = document.getElementById("myVideo");
+
+                $.ajax({
+                    url: "/web/charts/type_radar/",
+                    type: "GET",
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            const dataAll = res.data_radar.data[video.currentTime];
+
+                            const lineStyle = {
+                              width: 1,
+                              opacity: 0.5
+                            };
+                            option = {
+                              backgroundColor: '#161627',
+                              //title: {
+                             //   text: 'AQI - Radar',
+                            //    left: 'center',
+                           //     textStyle: {
+                            //      color: '#eee'
+                           //     }
+                           //   },
+                              legend: {
+                                bottom: 5,
+                                data: ['人数'],
+                                itemGap: 20,
+                                textStyle: {
+                                  color: '#fff',
+                                  fontSize: 14
+                                },
+                                selectedMode: 'single'
+                              },
+                              radar: {
+                                indicator: [
+                                  { name: 'Use Phone', max: 50 },
+                                  { name: 'Write', max: 50 },
+                                  { name: 'Lecture', max: 50 },
+                                  { name: 'Sleep', max: 50 },
+                                  { name: 'Others', max: 50 }
+                                ],
+                                shape: 'circle',
+                                splitNumber: 5,
+                                axisName: {
+                                  color: 'rgb(238, 197, 102)'
+                                },
+                                splitLine: {
+                                  lineStyle: {
+                                    color: [
+                                      'rgba(238, 197, 102, 0.1)',
+                                      'rgba(238, 197, 102, 0.2)',
+                                      'rgba(238, 197, 102, 0.4)',
+                                      'rgba(238, 197, 102, 0.6)',
+                                      'rgba(238, 197, 102, 0.8)'
+                                    ].reverse()
+                                  }
+                                },
+                                splitArea: {
+                                  show: false
+                                },
+                                axisLine: {
+                                  lineStyle: {
+                                    color: 'rgba(238, 197, 102, 0.5)'
+                                  }
+                                }
+                              },
+                              series: [
+                                {
+                                  name: 'Persons',
+                                  type: 'radar',
+                                  lineStyle: lineStyle,
+                                  data: dataAll,
+                                  symbol: 'none',
+                                  itemStyle: {
+                                    color: '#F9713C'
+                                  },
+                                  areaStyle: {
+                                    opacity: 0.1
+                                  }
+                                }
+                              ]
+                            };
+                            myChart.setOption(option);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("请求失败：" + error);
+                    }
+                });
+            }
+
+            function initBar() {
+                // videoDataVisualization.js
+
+                var myChart = echarts.init(document.getElementById('data_bar'));
+
+                $.ajax({
+                    url: "/web/charts/type_bar/",
+                    type: "GET",
+                    dataType: "JSON",
+                    success: function (res) {
+                        if (res.status) {
+                            var data = res.data_bar.data;
+                            option = {
+                              xAxis: {
+                                max: 'dataMax',
+                                  axisLine:{
+                                    lineStyle:{color:"#00eeff"}
+                                  }
+                              },
+                              yAxis: {
+                                type: 'category',
+                                data: ["Use Phone", "Write", "Lecture", "Sleep", "Others"],
+                                inverse: true,
+                                animationDuration: 300,
+                                animationDurationUpdate: 300,
+                                  axisLine:{
+                                    lineStyle:{
+                                        color:'#00eeff',
+                                    }
+                                  }
+                                //max: 5 // only the largest 3 bars will be displayed
+                              },
+                              series: [
+                                {
+                                  realtimeSort: true,
+                                  name: '听讲人数',
+                                  type: 'bar',
+                                  data: data,
+                                  label: {
+                                    show: true,
+                                    position: 'right',
+                                    valueAnimation: true
+                                  },
+                                          itemStyle: {
+                                              color: function (params) {
+                                                  // 自定义颜色逻辑
+                                                  var colorList = [
+                                                      '#C1232B', '#B5C334', '#FCCE10', '#E87C25', '#27727B',
+                                                      '#FE8463', '#9BCA63', '#FAD860', '#F3A43B', '#60C0DD',
+                                                      '#D7504B', '#C6E579', '#F4E001', '#F0805A', '#26C0C0'
+                                                  ];
+                                                  return colorList[params.dataIndex % colorList.length];
+                                              }
+                                          }}
+                              ],
+                              legend: {
+                                show: true,
+                                textStyle: {
+                                  color: '#fff',}
+
+                              },
+                              animationDuration: 0,
+                              animationDurationUpdate: 3000,
+                              animationEasing: 'linear',
+                              animationEasingUpdate: 'linear'
+                            };
+                            function run() {
+                              for (var i = 0; i < data.length; ++i) {
+                                data[i] = data[i] + 1; // 从data列表中获取数据
+                              }
+                              myChart.setOption({
+                                series: [
+                                  {
+                                    type: 'bar',
+                                    data
+                                  }
+                                ]
+                              });
+                            }
+
+                            setTimeout(function () {
+                              run();
+                            }, 0);
+                            setInterval(function () {
+                              run();
+                            }, 3000);
+                            myChart.setOption(option);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("请求失败：" + error);
+                    }
+                });
+            }
+        </script>
+        <script>
+
+            var video = document.getElementById("myVideo");
+            var progressBar = document.getElementById("progressBar");
+            var currentTimeSpanVideo = document.getElementById("currentTimeVideo");
+
+            video.controls = false; // 隐藏视频默认控制条
+
+            video.addEventListener("timeupdate", function() {
+                var minutes = Math.floor(video.currentTime / 60);
+                var seconds = Math.round(video.currentTime % 60);
+                currentTimeSpanVideo.innerHTML = "当前视频时间: " + minutes + " 分 " + seconds + " 秒";
+                progressBar.value = (video.currentTime / video.duration) * 100;
+            });
+
+            function seekVideo() {
+                console.log("video.currentime:", video.currentTime);
+                console.log("progressBar.value:", progressBar.value);
+                console.log("video.duration:", video.duration);
+                if (!isNaN(video.duration)) {
+                    video.currentTime = (progressBar.value / 100) * video.duration;
+                }
+            }
+            function addsecond() {
+                video.currentTime += 1;
+                console.log("add currentTime", video.currentTime);
+            }
+
+            function subsecond() {
+                video.currentTime -= 1;
+            }
+
+            function playVideo() {
+                video.play();
+            }
+
+            function pauseVideo() {
+                video.pause();
+            }
+        </script>
+
+    <!-- get temperature API-->
+    <script>
+            $.ajax({
+                url: '/web/api/temperature/',  // 替换为您的后端API URL
+                type: 'GET',
+                success: function(data) {
+                                        // 假设data.city_name为"Namequan, Chongqing (重庆南泉)"
+                    var cityName = data.city_name;
+                    var start = cityName.indexOf('(') + 1; // 找到左括号的位置
+                    var end = cityName.lastIndexOf(')'); // 找到右括号的位置
+                    var cityNameresult = cityName.slice(start, end); // 截取括号内的内容
+                    // 更新显示天气信息的<div>
+                    $('#temperature').html(cityNameresult + ' AQI: ' + data.aqi + ' 温度：' + data.temperature + '℃');
+                    // 将缓存标志设置为1
+                    localStorage.setItem('cached', '1');
+                },
+                error: function() {
+                    $('#temperature').html('Failed to load data.');
+                }
+            });
+
+
+     <!-- 更新时间 -->
+    // 更新时间显示
+        setInterval(function() {
+            var now = new Date();
+            var dayNames = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            var hours = now.getHours() < 10 ? '0' + now.getHours() : now.getHours();
+            var minutes = now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes();
+            var seconds = now.getSeconds() < 10 ? '0' + now.getSeconds() : now.getSeconds();
+            var dateString = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日 ' + dayNames[now.getDay()] + ' 当前时间 ' + hours + ':' + minutes + ':' + seconds;
+            $('#showtime').html(dateString);
+        }, 1000);
+</script>
+	</body>
+</html>
